@@ -9,25 +9,33 @@ Parameters:
 
 Resources:
   HelloHttpApi:
-    Type: AWS::Serverless::HttpApi
+    Type: AWS::ApiGatewayV2::Api
     Properties:
-      StageName: Prod
-      DefinitionBody:
-        openapi: 3.0.1
-        info:
-          title: "Hello World API"
-          version: "1.0"
-        paths:
-          /hello:
-            get:
-              responses:
-                "200":
-                  description: "Success"
-              x-amazon-apigateway-integration:
-                httpMethod: POST
-                type: aws_proxy
-                payloadFormatVersion: "2.0"
-                uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloWorldFunctionArn}/invocations"
+      Name: project-sam-hello-http-api
+      ProtocolType: HTTP
+
+  HelloIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HelloHttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationMethod: POST
+      IntegrationUri: !Ref HelloWorldFunctionArn
+      PayloadFormatVersion: "2.0"
+
+  HelloRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HelloHttpApi
+      RouteKey: "GET /hello"
+      Target: !Sub "integrations/${HelloIntegration}"
+
+  HelloStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref HelloHttpApi
+      StageName: $default
+      AutoDeploy: true
 
   HelloPermission:
     Type: AWS::Lambda::Permission
@@ -35,9 +43,9 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref HelloWorldFunctionArn
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HelloHttpApi}/*/GET/hello"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HelloHttpApi}/*/*/*"
 
 Outputs:
   ApiUrl:
     Description: "API Gateway Execution URL for Hello World"
-    Value: !Sub "https://${HelloHttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+    Value: !Sub "https://${HelloHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
