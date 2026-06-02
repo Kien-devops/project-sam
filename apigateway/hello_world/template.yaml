@@ -43,7 +43,7 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref HelloWorldFunctionArn
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HelloNativeHttpApi}/*/*/*"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HelloNativeHttpApi}/$default/GET/hello"
 
 Outputs:
   ApiUrl:

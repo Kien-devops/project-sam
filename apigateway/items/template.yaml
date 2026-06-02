@@ -62,7 +62,7 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref CreateItemFunctionArn
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsNativeHttpApi}/*/*/*"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsNativeHttpApi}/$default/POST/items"
 
   DeleteItemPermission:
     Type: AWS::Lambda::Permission
@@ -70,7 +70,7 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref DeleteItemFunctionArn
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsNativeHttpApi}/*/*/*"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsNativeHttpApi}/$default/DELETE/items/*"
 
 Outputs:
   ApiUrl:
