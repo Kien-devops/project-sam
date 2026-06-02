@@ -1,0 +1,198 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Portfolio HTTP API Gateway Stack
+
+Parameters:
+  BlogsFunctionArn:
+    Type: String
+    Description: "ARN of the Blogs Lambda function"
+  ProjectsFunctionArn:
+    Type: String
+    Description: "ARN of the Projects Lambda function"
+
+Resources:
+  PortfolioHttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: project-sam-portfolio-http-api
+      ProtocolType: HTTP
+
+  BlogsIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationMethod: POST
+      IntegrationUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BlogsFunctionArn}/invocations"
+      PayloadFormatVersion: "2.0"
+
+  ProjectsIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationMethod: POST
+      IntegrationUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ProjectsFunctionArn}/invocations"
+      PayloadFormatVersion: "2.0"
+
+  ListBlogsRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      RouteKey: "GET /blogs"
+      Target: !Sub "integrations/${BlogsIntegration}"
+
+  GetBlogRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      RouteKey: "GET /blogs/{id}"
+      Target: !Sub "integrations/${BlogsIntegration}"
+
+  CreateBlogRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      RouteKey: "POST /blogs"
+      Target: !Sub "integrations/${BlogsIntegration}"
+
+  UpdateBlogRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      RouteKey: "PUT /blogs/{id}"
+      Target: !Sub "integrations/${BlogsIntegration}"
+
+  DeleteBlogRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      RouteKey: "DELETE /blogs/{id}"
+      Target: !Sub "integrations/${BlogsIntegration}"
+
+  ListProjectsRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      RouteKey: "GET /projects"
+      Target: !Sub "integrations/${ProjectsIntegration}"
+
+  GetProjectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      RouteKey: "GET /projects/{id}"
+      Target: !Sub "integrations/${ProjectsIntegration}"
+
+  CreateProjectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      RouteKey: "POST /projects"
+      Target: !Sub "integrations/${ProjectsIntegration}"
+
+  UpdateProjectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      RouteKey: "PUT /projects/{id}"
+      Target: !Sub "integrations/${ProjectsIntegration}"
+
+  DeleteProjectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      RouteKey: "DELETE /projects/{id}"
+      Target: !Sub "integrations/${ProjectsIntegration}"
+
+  PortfolioStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      StageName: $default
+      AutoDeploy: true
+
+  ListBlogsPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BlogsFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/GET/blogs"
+
+  GetBlogPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BlogsFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/GET/blogs/*"
+
+  CreateBlogPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BlogsFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/POST/blogs"
+
+  UpdateBlogPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BlogsFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/PUT/blogs/*"
+
+  DeleteBlogPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BlogsFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/DELETE/blogs/*"
+
+  ListProjectsPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ProjectsFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/GET/projects"
+
+  GetProjectPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ProjectsFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/GET/projects/*"
+
+  CreateProjectPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ProjectsFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/POST/projects"
+
+  UpdateProjectPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ProjectsFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/PUT/projects/*"
+
+  DeleteProjectPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ProjectsFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/DELETE/projects/*"
+
+Outputs:
+  ApiUrl:
+    Description: "Portfolio HTTP API base URL"
+    Value: !Sub "https://${PortfolioHttpApi}.execute-api.${AWS::Region}.amazonaws.com"

@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Projects DynamoDB Table stack
+
+Resources:
+  ProjectsTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName: project-sam-projects
+      PrimaryKey:
+        Name: id
+        Type: String
+      SSESpecification:
+        SSEEnabled: true
+
+Outputs:
+  TableName:
+    Description: "Name of the DynamoDB projects table"
+    Value: !Ref ProjectsTable
+  TableArn:
+    Description: "ARN of the DynamoDB projects table"
+    Value: !GetAtt ProjectsTable.Arn

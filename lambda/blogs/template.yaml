@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Blogs Lambda Stack
+
+Parameters:
+  TableName:
+    Type: String
+    Description: "Name of the blogs DynamoDB table"
+
+Resources:
+  BlogsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: app.lambda_handler
+      Runtime: python3.13
+      FunctionName: project-sam-blogs
+      Timeout: 15
+      Architectures:
+        - x86_64
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref TableName
+
+Outputs:
+  BlogsFunctionArn:
+    Description: "ARN of the Blogs function"
+    Value: !GetAtt BlogsFunction.Arn

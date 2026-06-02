@@ -13,6 +13,16 @@ Resources:
     Properties:
       Location: dynamodb/items/template.yaml
 
+  BlogsDBStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: dynamodb/blogs/template.yaml
+
+  ProjectsDBStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: dynamodb/projects/template.yaml
+
   # 2. Shared Lambda Layer Stack
   SharedLayerStack:
     Type: AWS::Serverless::Application
@@ -36,6 +46,20 @@ Resources:
         SharedLayerArn: !GetAtt SharedLayerStack.Outputs.SharedLayerArn
         TableName: !GetAtt ItemsDBStack.Outputs.TableName
 
+  BlogsLambdaStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: lambda/blogs/template.yaml
+      Parameters:
+        TableName: !GetAtt BlogsDBStack.Outputs.TableName
+
+  ProjectsLambdaStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: lambda/projects/template.yaml
+      Parameters:
+        TableName: !GetAtt ProjectsDBStack.Outputs.TableName
+
   # 5. API Gateway Stack for Hello World
   HelloApiStack:
     Type: AWS::Serverless::Application
@@ -53,6 +77,15 @@ Resources:
         CreateItemFunctionArn: !GetAtt ItemsLambdaStack.Outputs.CreateItemFunctionArn
         DeleteItemFunctionArn: !GetAtt ItemsLambdaStack.Outputs.DeleteItemFunctionArn
 
+  # 7. Portfolio API Gateway Stack for Blogs and Projects
+  PortfolioApiStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: apigateway/portfolio/template.yaml
+      Parameters:
+        BlogsFunctionArn: !GetAtt BlogsLambdaStack.Outputs.BlogsFunctionArn
+        ProjectsFunctionArn: !GetAtt ProjectsLambdaStack.Outputs.ProjectsFunctionArn
+
 Outputs:
   HelloWorldApi:
     Description: "Base URL for Hello World API"
@@ -66,3 +99,18 @@ Outputs:
   DynamoDBTableName:
     Description: "Name of the DynamoDB table created"
     Value: !GetAtt ItemsDBStack.Outputs.TableName
+  PortfolioApi:
+    Description: "Base URL for Portfolio API"
+    Value: !GetAtt PortfolioApiStack.Outputs.ApiUrl
+  BlogsApi:
+    Description: "Base URL for Blogs API"
+    Value: !Sub "${PortfolioApiStack.Outputs.ApiUrl}/blogs"
+  ProjectsApi:
+    Description: "Base URL for Projects API"
+    Value: !Sub "${PortfolioApiStack.Outputs.ApiUrl}/projects"
+  BlogsDynamoDBTableName:
+    Description: "Name of the DynamoDB blogs table"
+    Value: !GetAtt BlogsDBStack.Outputs.TableName
+  ProjectsDynamoDBTableName:
+    Description: "Name of the DynamoDB projects table"
+    Value: !GetAtt ProjectsDBStack.Outputs.TableName
