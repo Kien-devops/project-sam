@@ -41,7 +41,7 @@ jobs:
           sam deploy \
             --stack-name project-sam \
             --s3-bucket ${{ secrets.AWS_S3_BUCKET }} \
-            --capabilities CAPABILITY_IAM \
+            --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset \
             --region ${{ secrets.AWS_REGION || 'ap-southeast-1' }}

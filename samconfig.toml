@@ -10,7 +10,7 @@ parallel = true
 
 [default.deploy.parameters]
 stack_name = "project-sam"
-capabilities = "CAPABILITY_IAM"
+capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
 confirm_changeset = false
 disable_rollback = false
 region = "ap-southeast-1"
