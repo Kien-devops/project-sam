@@ -11,6 +11,7 @@ Resources:
   HelloApi:
     Type: AWS::Serverless::Api
     Properties:
+      Name: project-sam-hello-api
       StageName: Prod
       DefinitionBody:
         openapi: 3.0.1

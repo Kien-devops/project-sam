@@ -6,6 +6,7 @@ Resources:
   ItemsTable:
     Type: AWS::Serverless::SimpleTable
     Properties:
+      TableName: project-sam-items
       PrimaryKey:
         Name: id
         Type: String

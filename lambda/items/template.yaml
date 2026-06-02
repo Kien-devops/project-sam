@@ -17,6 +17,7 @@ Resources:
       CodeUri: ./create/
       Handler: app.lambda_handler
       Runtime: python3.13
+      FunctionName: project-sam-create-item
       Architectures:
         - x86_64
       Layers:
@@ -34,6 +35,7 @@ Resources:
       CodeUri: ./delete/
       Handler: app.lambda_handler
       Runtime: python3.13
+      FunctionName: project-sam-delete-item
       Architectures:
         - x86_64
       Layers:

@@ -6,6 +6,7 @@ Resources:
   SharedLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
+      LayerName: project-sam-shared-layer
       Description: "Shared utilities and helpers layer for project-sam functions"
       ContentUri: ../layers/shared_layer/
       CompatibleRuntimes:
