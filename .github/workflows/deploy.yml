@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - dev
  
 permissions:
   contents: read
@@ -27,25 +26,12 @@ jobs:
         with:
           use-installer: true
 
-      - name: Determine Target Environment
-        id: set-env
-        run: |
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "env_name=prod" >> $GITHUB_OUTPUT
-            echo "aws_region=${{ secrets.AWS_REGION_PROD || secrets.AWS_REGION || 'ap-southeast-1' }}" >> $GITHUB_OUTPUT
-            echo "s3_bucket=${{ secrets.AWS_S3_BUCKET_PROD || secrets.AWS_S3_BUCKET }}" >> $GITHUB_OUTPUT
-          else
-            echo "env_name=dev" >> $GITHUB_OUTPUT
-            echo "aws_region=${{ secrets.AWS_REGION_DEV || secrets.AWS_REGION || 'ap-southeast-1' }}" >> $GITHUB_OUTPUT
-            echo "s3_bucket=${{ secrets.AWS_S3_BUCKET_DEV || secrets.AWS_S3_BUCKET }}" >> $GITHUB_OUTPUT
-          fi
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ steps.set-env.outputs.aws_region }}
+          aws-region: ${{ secrets.AWS_REGION || 'ap-southeast-1' }}
 
       - name: SAM Build
         run: sam build
@@ -53,8 +39,9 @@ jobs:
       - name: SAM Deploy
         run: |
           sam deploy \
-            --config-env ${{ steps.set-env.outputs.env_name }} \
-            --s3-bucket ${{ steps.set-env.outputs.s3_bucket }} \
+            --stack-name project-sam \
+            --s3-bucket ${{ secrets.AWS_S3_BUCKET }} \
+            --capabilities CAPABILITY_IAM \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset \
-            --region ${{ steps.set-env.outputs.aws_region }}
+            --region ${{ secrets.AWS_REGION || 'ap-southeast-1' }}
