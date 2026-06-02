@@ -18,6 +18,7 @@ Resources:
       Handler: app.lambda_handler
       Runtime: python3.13
       FunctionName: project-sam-create-item
+      Timeout: 15
       Architectures:
         - x86_64
       Layers:
@@ -36,6 +37,7 @@ Resources:
       Handler: app.lambda_handler
       Runtime: python3.13
       FunctionName: project-sam-delete-item
+      Timeout: 15
       Architectures:
         - x86_64
       Layers:

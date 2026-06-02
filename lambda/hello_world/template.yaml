@@ -15,6 +15,7 @@ Resources:
       Handler: app.lambda_handler
       Runtime: python3.13
       FunctionName: project-sam-hello-world
+      Timeout: 10
       Architectures:
         - x86_64
       Layers:
