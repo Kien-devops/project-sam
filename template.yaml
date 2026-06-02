@@ -7,12 +7,6 @@ Description: >
   into resource types and domain/feature folders for maximum scalability.
 
 Resources:
-  # 1. DynamoDB Stack for Items
-  ItemsDBStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: dynamodb/items/template.yaml
-
   BlogsDBStack:
     Type: AWS::Serverless::Application
     Properties:
@@ -22,29 +16,6 @@ Resources:
     Type: AWS::Serverless::Application
     Properties:
       Location: dynamodb/projects/template.yaml
-
-  # 2. Shared Lambda Layer Stack
-  SharedLayerStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: lambda/shared/template.yaml
-
-  # 3. Lambda Stack for Hello World
-  HelloLambdaStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: lambda/hello_world/template.yaml
-      Parameters:
-        SharedLayerArn: !GetAtt SharedLayerStack.Outputs.SharedLayerArn
-
-  # 4. Lambda Stack for Items
-  ItemsLambdaStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: lambda/items/template.yaml
-      Parameters:
-        SharedLayerArn: !GetAtt SharedLayerStack.Outputs.SharedLayerArn
-        TableName: !GetAtt ItemsDBStack.Outputs.TableName
 
   BlogsLambdaStack:
     Type: AWS::Serverless::Application
@@ -60,24 +31,6 @@ Resources:
       Parameters:
         TableName: !GetAtt ProjectsDBStack.Outputs.TableName
 
-  # 5. API Gateway Stack for Hello World
-  HelloApiStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: apigateway/hello_world/template.yaml
-      Parameters:
-        HelloWorldFunctionArn: !GetAtt HelloLambdaStack.Outputs.HelloWorldFunctionArn
-
-  # 6. API Gateway Stack for Items
-  ItemsApiStack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: apigateway/items/template.yaml
-      Parameters:
-        CreateItemFunctionArn: !GetAtt ItemsLambdaStack.Outputs.CreateItemFunctionArn
-        DeleteItemFunctionArn: !GetAtt ItemsLambdaStack.Outputs.DeleteItemFunctionArn
-
-  # 7. Portfolio API Gateway Stack for Blogs and Projects
   PortfolioApiStack:
     Type: AWS::Serverless::Application
     Properties:
@@ -87,18 +40,6 @@ Resources:
         ProjectsFunctionArn: !GetAtt ProjectsLambdaStack.Outputs.ProjectsFunctionArn
 
 Outputs:
-  HelloWorldApi:
-    Description: "Base URL for Hello World API"
-    Value: !Sub "${HelloApiStack.Outputs.ApiUrl}/hello"
-  CreateItemApi:
-    Description: "Base URL for Create Item API"
-    Value: !Sub "${ItemsApiStack.Outputs.ApiUrl}/items"
-  DeleteItemApi:
-    Description: "Base URL for Delete Item API"
-    Value: !Sub "${ItemsApiStack.Outputs.ApiUrl}/items/{id}"
-  DynamoDBTableName:
-    Description: "Name of the DynamoDB table created"
-    Value: !GetAtt ItemsDBStack.Outputs.TableName
   PortfolioApi:
     Description: "Base URL for Portfolio API"
     Value: !GetAtt PortfolioApiStack.Outputs.ApiUrl

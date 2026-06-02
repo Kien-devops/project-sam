@@ -1,1 +1,0 @@
-# Requirements for hello_world function
