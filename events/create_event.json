@@ -1,0 +1,27 @@
+{
+  "body": "{\"id\": \"prod-item-101\", \"name\": \"Kubernetes Guide Book\", \"description\": \"Comprehensive guide on deploying Kubernetes clusters on AWS EKS\"}",
+  "resource": "/items",
+  "path": "/items",
+  "httpMethod": "POST",
+  "isBase64Encoded": false,
+  "queryStringParameters": null,
+  "multiValueQueryStringParameters": null,
+  "pathParameters": null,
+  "stageVariables": null,
+  "headers": {
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+    "Host": "127.0.0.1:3000",
+    "User-Agent": "Custom User Agent String"
+  },
+  "requestContext": {
+    "accountId": "123456789012",
+    "resourceId": "123456",
+    "stage": "Prod",
+    "requestId": "c6ae90be-217b-43ad-91d6-8a11d8a12d94",
+    "path": "/items",
+    "resourcePath": "/items",
+    "httpMethod": "POST",
+    "apiId": "1234567890"
+  }
+}

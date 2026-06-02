@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Shared Lambda Layer stack
+
+Resources:
+  SharedLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      Description: "Shared utilities and helpers layer for project-sam functions"
+      ContentUri: ../layers/shared_layer/
+      CompatibleRuntimes:
+        - python3.13
+      RetentionPolicy: Delete
+    Metadata:
+      BuildMethod: python
+
+Outputs:
+  SharedLayerArn:
+    Description: "ARN of the Shared Layer"
+    Value: !Ref SharedLayer

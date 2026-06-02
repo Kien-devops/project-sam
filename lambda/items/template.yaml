@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Items Lambda Stack
+
+Parameters:
+  SharedLayerArn:
+    Type: String
+    Description: "ARN of the shared Lambda layer"
+  TableName:
+    Type: String
+    Description: "Name of the DynamoDB table"
+
+Resources:
+  CreateItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./create/
+      Handler: app.lambda_handler
+      Runtime: python3.13
+      Architectures:
+        - x86_64
+      Layers:
+        - !Ref SharedLayerArn
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref TableName
+
+  DeleteItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./delete/
+      Handler: app.lambda_handler
+      Runtime: python3.13
+      Architectures:
+        - x86_64
+      Layers:
+        - !Ref SharedLayerArn
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref TableName
+
+Outputs:
+  CreateItemFunctionArn:
+    Description: "ARN of the CreateItem function"
+    Value: !GetAtt CreateItemFunction.Arn
+  DeleteItemFunctionArn:
+    Description: "ARN of the DeleteItem function"
+    Value: !GetAtt DeleteItemFunction.Arn

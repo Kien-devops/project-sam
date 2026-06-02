@@ -1,0 +1,28 @@
+{
+  "body": null,
+  "resource": "/items/{id}",
+  "path": "/items/prod-item-101",
+  "httpMethod": "DELETE",
+  "isBase64Encoded": false,
+  "queryStringParameters": null,
+  "multiValueQueryStringParameters": null,
+  "pathParameters": {
+    "id": "prod-item-101"
+  },
+  "stageVariables": null,
+  "headers": {
+    "Accept": "application/json",
+    "Host": "127.0.0.1:3000",
+    "User-Agent": "Custom User Agent String"
+  },
+  "requestContext": {
+    "accountId": "123456789012",
+    "resourceId": "123456",
+    "stage": "Prod",
+    "requestId": "c6ae90be-217b-43ad-91d6-8a11d8a12d94",
+    "path": "/items/prod-item-101",
+    "resourcePath": "/items/{id}",
+    "httpMethod": "DELETE",
+    "apiId": "1234567890"
+  }
+}

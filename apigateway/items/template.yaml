@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Items API Gateway Stack
+
+Parameters:
+  CreateItemFunctionArn:
+    Type: String
+    Description: "ARN of the CreateItem Lambda function"
+  DeleteItemFunctionArn:
+    Type: String
+    Description: "ARN of the DeleteItem Lambda function"
+
+Resources:
+  ItemsApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      DefinitionBody:
+        openapi: 3.0.1
+        info:
+          title: "Items API"
+          version: "1.0"
+        paths:
+          /items:
+            post:
+              responses:
+                "201":
+                  description: "Success"
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateItemFunctionArn}/invocations"
+          /items/{id}:
+            delete:
+              parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+              responses:
+                "200":
+                  description: "Success"
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteItemFunctionArn}/invocations"
+
+  CreateItemPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CreateItemFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsApi}/*/*/*"
+
+  DeleteItemPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref DeleteItemFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsApi}/*/*/*"
+
+Outputs:
+  ApiUrl:
+    Description: "API Gateway Execution URL for Items"
+    Value: !Sub "https://${ItemsApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"

@@ -1,0 +1,57 @@
+name: Deploy Serverless Application
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+ 
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Setup AWS SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Determine Target Environment
+        id: set-env
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "env_name=prod" >> $GITHUB_OUTPUT
+            echo "aws_region=${{ secrets.AWS_REGION_PROD || secrets.AWS_REGION || 'ap-southeast-1' }}" >> $GITHUB_OUTPUT
+          else
+            echo "env_name=dev" >> $GITHUB_OUTPUT
+            echo "aws_region=${{ secrets.AWS_REGION_DEV || secrets.AWS_REGION || 'ap-southeast-1' }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ steps.set-env.outputs.aws_region }}
+
+      - name: SAM Build
+        run: sam build
+
+      - name: SAM Deploy
+        run: |
+          sam deploy \
+            --config-env ${{ steps.set-env.outputs.env_name }} \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --region ${{ steps.set-env.outputs.aws_region }}

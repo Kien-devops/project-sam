@@ -1,0 +1,36 @@
+# AWS SAM CLI config file supporting multiple environments (dev and prod)
+# More information: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-config.html
+version = 0.1
+
+[default.global.parameters]
+stack_name = "project-sam"
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+# ==========================================
+# DEVELOPMENT ENVIRONMENT
+# ==========================================
+[dev.deploy.parameters]
+stack_name = "project-sam-dev"
+resolve_s3 = true
+s3_prefix = "project-sam-dev"
+region = "ap-southeast-1"
+confirm_changeset = false
+capabilities = "CAPABILITY_IAM"
+disable_rollback = false
+image_repositories = []
+
+# ==========================================
+# PRODUCTION ENVIRONMENT
+# ==========================================
+[prod.deploy.parameters]
+stack_name = "project-sam-prod"
+resolve_s3 = true
+s3_prefix = "project-sam-prod"
+region = "ap-southeast-1"
+confirm_changeset = false
+capabilities = "CAPABILITY_IAM"
+disable_rollback = false
+image_repositories = []
