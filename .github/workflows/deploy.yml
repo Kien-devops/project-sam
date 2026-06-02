@@ -33,9 +33,11 @@ jobs:
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "env_name=prod" >> $GITHUB_OUTPUT
             echo "aws_region=${{ secrets.AWS_REGION_PROD || secrets.AWS_REGION || 'ap-southeast-1' }}" >> $GITHUB_OUTPUT
+            echo "s3_bucket=${{ secrets.AWS_S3_BUCKET_PROD || secrets.AWS_S3_BUCKET }}" >> $GITHUB_OUTPUT
           else
             echo "env_name=dev" >> $GITHUB_OUTPUT
             echo "aws_region=${{ secrets.AWS_REGION_DEV || secrets.AWS_REGION || 'ap-southeast-1' }}" >> $GITHUB_OUTPUT
+            echo "s3_bucket=${{ secrets.AWS_S3_BUCKET_DEV || secrets.AWS_S3_BUCKET }}" >> $GITHUB_OUTPUT
           fi
 
       - name: Configure AWS Credentials
@@ -52,6 +54,7 @@ jobs:
         run: |
           sam deploy \
             --config-env ${{ steps.set-env.outputs.env_name }} \
+            --s3-bucket ${{ steps.set-env.outputs.s3_bucket }} \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset \
             --region ${{ steps.set-env.outputs.aws_region }}
