@@ -20,7 +20,7 @@ Resources:
       ApiId: !Ref HelloNativeHttpApi
       IntegrationType: AWS_PROXY
       IntegrationMethod: POST
-      IntegrationUri: !Ref HelloWorldFunctionArn
+      IntegrationUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloWorldFunctionArn}/invocations"
       PayloadFormatVersion: "2.0"
 
   HelloRoute:

@@ -23,7 +23,7 @@ Resources:
       ApiId: !Ref ItemsNativeHttpApi
       IntegrationType: AWS_PROXY
       IntegrationMethod: POST
-      IntegrationUri: !Ref CreateItemFunctionArn
+      IntegrationUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateItemFunctionArn}/invocations"
       PayloadFormatVersion: "2.0"
 
   DeleteItemIntegration:
@@ -32,7 +32,7 @@ Resources:
       ApiId: !Ref ItemsNativeHttpApi
       IntegrationType: AWS_PROXY
       IntegrationMethod: POST
-      IntegrationUri: !Ref DeleteItemFunctionArn
+      IntegrationUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteItemFunctionArn}/invocations"
       PayloadFormatVersion: "2.0"
 
   CreateItemRoute:
