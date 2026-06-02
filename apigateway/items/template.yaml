@@ -11,7 +11,7 @@ Parameters:
     Description: "ARN of the DeleteItem Lambda function"
 
 Resources:
-  ItemsApi:
+  ItemsHttpApi:
     Type: AWS::Serverless::HttpApi
     Properties:
       StageName: Prod
@@ -54,7 +54,7 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref CreateItemFunctionArn
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsApi}/*/POST/items"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsHttpApi}/*/POST/items"
 
   DeleteItemPermission:
     Type: AWS::Lambda::Permission
@@ -62,9 +62,9 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref DeleteItemFunctionArn
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsApi}/*/DELETE/items/*"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsHttpApi}/*/DELETE/items/*"
 
 Outputs:
   ApiUrl:
     Description: "API Gateway Execution URL for Items"
-    Value: !Sub "https://${ItemsApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+    Value: !Sub "https://${ItemsHttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
