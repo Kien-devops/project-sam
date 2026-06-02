@@ -12,7 +12,7 @@ Resources:
         - python3.13
       RetentionPolicy: Delete
     Metadata:
-      BuildMethod: python
+      BuildMethod: python3.13
 
 Outputs:
   SharedLayerArn:
