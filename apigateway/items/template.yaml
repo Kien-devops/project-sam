@@ -16,6 +16,7 @@ Resources:
     Properties:
       Name: project-sam-items-api
       StageName: Prod
+      EndpointConfiguration: REGIONAL
       DefinitionBody:
         openapi: 3.0.1
         info:

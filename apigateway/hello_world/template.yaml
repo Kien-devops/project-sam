@@ -13,6 +13,7 @@ Resources:
     Properties:
       Name: project-sam-hello-api
       StageName: Prod
+      EndpointConfiguration: REGIONAL
       DefinitionBody:
         openapi: 3.0.1
         info:
