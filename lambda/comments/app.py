@@ -69,6 +69,19 @@ def _email_hash(email):
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
+def _email_display(email):
+    normalized = str(email or "").strip().lower()
+    if "@" not in normalized:
+        return ""
+
+    local_part, domain = normalized.split("@", 1)
+    if len(local_part) <= 2:
+        masked_local = local_part[:1] + "*"
+    else:
+        masked_local = f"{local_part[:2]}***"
+    return f"{masked_local}@{domain}"
+
+
 def _validate_payload(data):
     if not data:
         return "Invalid request: missing body"
@@ -122,6 +135,7 @@ def _public_comment(metadata, content_payload):
         "parent_comment_id": metadata.get("parent_comment_id"),
         "type": metadata["type"],
         "author_name": metadata.get("author_name", "Anonymous"),
+        "author_email": _email_display(content_payload.get("author_email")),
         "content": content_payload.get("content", ""),
         "created_at": metadata["created_at"],
         "reply_count": int(metadata.get("reply_count", 0)),
