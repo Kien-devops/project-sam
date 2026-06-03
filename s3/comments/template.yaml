@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Comments S3 content bucket stack
+
+Resources:
+  CommentsContentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "project-sam-comments-content-${AWS::AccountId}-${AWS::Region}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+
+Outputs:
+  BucketName:
+    Description: "Name of the S3 bucket storing comment content"
+    Value: !Ref CommentsContentBucket
+  BucketArn:
+    Description: "ARN of the S3 bucket storing comment content"
+    Value: !GetAtt CommentsContentBucket.Arn

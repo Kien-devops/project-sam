@@ -9,6 +9,9 @@ Parameters:
   ProjectsFunctionArn:
     Type: String
     Description: "ARN of the Projects Lambda function"
+  CommentsFunctionArn:
+    Type: String
+    Description: "ARN of the Comments Lambda function"
 
 Resources:
   PortfolioHttpApi:
@@ -16,6 +19,21 @@ Resources:
     Properties:
       Name: project-sam-portfolio-http-api
       ProtocolType: HTTP
+      CorsConfiguration:
+        AllowOrigins:
+          - "*"
+        AllowMethods:
+          - OPTIONS
+          - GET
+          - POST
+          - PUT
+          - DELETE
+        AllowHeaders:
+          - Content-Type
+          - X-Amz-Date
+          - Authorization
+          - X-Api-Key
+          - X-Amz-Security-Token
 
   BlogsIntegration:
     Type: AWS::ApiGatewayV2::Integration
@@ -33,6 +51,15 @@ Resources:
       IntegrationType: AWS_PROXY
       IntegrationMethod: POST
       IntegrationUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ProjectsFunctionArn}/invocations"
+      PayloadFormatVersion: "2.0"
+
+  CommentsIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationMethod: POST
+      IntegrationUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CommentsFunctionArn}/invocations"
       PayloadFormatVersion: "2.0"
 
   ListBlogsRoute:
@@ -69,6 +96,27 @@ Resources:
       ApiId: !Ref PortfolioHttpApi
       RouteKey: "DELETE /blogs/{id}"
       Target: !Sub "integrations/${BlogsIntegration}"
+
+  ListCommentsRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      RouteKey: "GET /blogs/{id}/comments"
+      Target: !Sub "integrations/${CommentsIntegration}"
+
+  CreateCommentRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      RouteKey: "POST /blogs/{id}/comments"
+      Target: !Sub "integrations/${CommentsIntegration}"
+
+  CreateReplyRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      RouteKey: "POST /blogs/{id}/comments/{commentId}/replies"
+      Target: !Sub "integrations/${CommentsIntegration}"
 
   ListProjectsRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -151,6 +199,30 @@ Resources:
       FunctionName: !Ref BlogsFunctionArn
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/DELETE/blogs/*"
+
+  ListCommentsPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CommentsFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/GET/blogs/*/comments"
+
+  CreateCommentPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CommentsFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/POST/blogs/*/comments"
+
+  CreateReplyPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CommentsFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/POST/blogs/*/comments/*/replies"
 
   ListProjectsPermission:
     Type: AWS::Lambda::Permission

@@ -17,6 +17,16 @@ Resources:
     Properties:
       Location: dynamodb/projects/template.yaml
 
+  CommentsDBStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: dynamodb/comments/template.yaml
+
+  CommentsContentStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: s3/comments/template.yaml
+
   BlogsLambdaStack:
     Type: AWS::Serverless::Application
     Properties:
@@ -31,6 +41,14 @@ Resources:
       Parameters:
         TableName: !GetAtt ProjectsDBStack.Outputs.TableName
 
+  CommentsLambdaStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: lambda/comments/template.yaml
+      Parameters:
+        TableName: !GetAtt CommentsDBStack.Outputs.TableName
+        ContentBucketName: !GetAtt CommentsContentStack.Outputs.BucketName
+
   PortfolioApiStack:
     Type: AWS::Serverless::Application
     Properties:
@@ -38,6 +56,7 @@ Resources:
       Parameters:
         BlogsFunctionArn: !GetAtt BlogsLambdaStack.Outputs.BlogsFunctionArn
         ProjectsFunctionArn: !GetAtt ProjectsLambdaStack.Outputs.ProjectsFunctionArn
+        CommentsFunctionArn: !GetAtt CommentsLambdaStack.Outputs.CommentsFunctionArn
 
 Outputs:
   PortfolioApi:
@@ -49,9 +68,18 @@ Outputs:
   ProjectsApi:
     Description: "Base URL for Projects API"
     Value: !Sub "${PortfolioApiStack.Outputs.ApiUrl}/projects"
+  CommentsApi:
+    Description: "Base URL pattern for Blog Comments API"
+    Value: !Sub "${PortfolioApiStack.Outputs.ApiUrl}/blogs/{id}/comments"
   BlogsDynamoDBTableName:
     Description: "Name of the DynamoDB blogs table"
     Value: !GetAtt BlogsDBStack.Outputs.TableName
   ProjectsDynamoDBTableName:
     Description: "Name of the DynamoDB projects table"
     Value: !GetAtt ProjectsDBStack.Outputs.TableName
+  CommentsDynamoDBTableName:
+    Description: "Name of the DynamoDB comments metadata table"
+    Value: !GetAtt CommentsDBStack.Outputs.TableName
+  CommentsContentBucketName:
+    Description: "Name of the S3 bucket storing comment content"
+    Value: !GetAtt CommentsContentStack.Outputs.BucketName

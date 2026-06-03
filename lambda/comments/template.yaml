@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Comments Lambda Stack
+
+Parameters:
+  TableName:
+    Type: String
+    Description: "Name of the comments DynamoDB metadata table"
+  ContentBucketName:
+    Type: String
+    Description: "Name of the S3 bucket storing comment content"
+
+Resources:
+  CommentsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: app.lambda_handler
+      Runtime: python3.13
+      FunctionName: project-sam-comments
+      Timeout: 20
+      Architectures:
+        - x86_64
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+        - S3CrudPolicy:
+            BucketName: !Ref ContentBucketName
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref TableName
+          CONTENT_BUCKET_NAME: !Ref ContentBucketName
+
+Outputs:
+  CommentsFunctionArn:
+    Description: "ARN of the Comments function"
+    Value: !GetAtt CommentsFunction.Arn
