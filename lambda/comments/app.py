@@ -138,8 +138,8 @@ def _list_comments(event):
         KeyConditionExpression=Key("pk").eq(_metadata_pk(blog_id))
     )
 
-    comments_by_id = {}
-    replies = []
+    items_by_id = {}
+    root_comments = []
 
     for item in result.get("Items", []):
         if item.get("status") != "approved":
@@ -152,18 +152,18 @@ def _list_comments(event):
             continue
 
         public_item = _public_comment(item, content_payload)
+        items_by_id[item["comment_id"]] = public_item
+
+    for item in sorted(items_by_id.values(), key=lambda entry: entry["created_at"]):
         if item.get("type") == "comment":
-            comments_by_id[item["comment_id"]] = public_item
-        elif item.get("type") == "reply":
-            replies.append(public_item)
+            root_comments.append(item)
+            continue
 
-    for reply in sorted(replies, key=lambda item: item["created_at"]):
-        parent = comments_by_id.get(reply.get("parent_comment_id"))
+        parent = items_by_id.get(item.get("parent_comment_id"))
         if parent:
-            parent["replies"].append(reply)
+            parent["replies"].append(item)
 
-    comments = sorted(comments_by_id.values(), key=lambda item: item["created_at"])
-    return build_response(200, {"items": comments, "count": len(comments)})
+    return build_response(200, {"items": root_comments, "count": len(root_comments)})
 
 
 def _create_comment(event):
@@ -218,10 +218,9 @@ def _create_comment(event):
     )
 
 
-def _find_parent_comment(blog_id, parent_comment_id):
+def _find_parent_item(blog_id, parent_comment_id):
     result = get_table().query(
         KeyConditionExpression=Key("pk").eq(_metadata_pk(blog_id))
-        & Key("sk").begins_with("COMMENT#")
     )
     for item in result.get("Items", []):
         if item.get("comment_id") == parent_comment_id and item.get("status") == "approved":
@@ -237,7 +236,7 @@ def _create_reply(event):
     if not parent_comment_id:
         return build_response(400, {"message": "Missing required 'commentId' path parameter"})
 
-    parent = _find_parent_comment(blog_id, parent_comment_id)
+    parent = _find_parent_item(blog_id, parent_comment_id)
     if not parent:
         return build_response(404, {"message": "Parent comment not found"})
 
