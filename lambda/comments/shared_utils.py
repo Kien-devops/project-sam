@@ -42,6 +42,16 @@ def get_content_bucket_name():
     return bucket_name
 
 
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        import decimal
+        if isinstance(obj, decimal.Decimal):
+            if obj % 1 == 0:
+                return int(obj)
+            return float(obj)
+        return super(DecimalEncoder, self).default(obj)
+
+
 def build_response(status_code: int, body_dict: dict) -> dict:
     return {
         "statusCode": status_code,
@@ -51,5 +61,6 @@ def build_response(status_code: int, body_dict: dict) -> dict:
             "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
             "Access-Control-Allow-Methods": "OPTIONS,GET,POST,PUT,DELETE",
         },
-        "body": json.dumps(body_dict),
+        "body": json.dumps(body_dict, cls=DecimalEncoder),
     }
+
