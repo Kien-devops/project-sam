@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Timeline Lambda Stack
+
+Parameters:
+  TableName:
+    Type: String
+    Description: "Name of the timeline DynamoDB table"
+
+Resources:
+  TimelineFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: app.lambda_handler
+      Runtime: python3.13
+      FunctionName: project-sam-timeline
+      Timeout: 15
+      Architectures:
+        - x86_64
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TableName
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref TableName
+
+Outputs:
+  TimelineFunctionArn:
+    Description: "ARN of the Timeline function"
+    Value: !GetAtt TimelineFunction.Arn

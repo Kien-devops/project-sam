@@ -22,6 +22,11 @@ Resources:
     Properties:
       Location: dynamodb/comments/template.yaml
 
+  TimelineDBStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: dynamodb/timeline/template.yaml
+
   CommentsContentStack:
     Type: AWS::Serverless::Application
     Properties:
@@ -49,6 +54,13 @@ Resources:
         TableName: !GetAtt CommentsDBStack.Outputs.TableName
         ContentBucketName: !GetAtt CommentsContentStack.Outputs.BucketName
 
+  TimelineLambdaStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: lambda/timeline/template.yaml
+      Parameters:
+        TableName: !GetAtt TimelineDBStack.Outputs.TableName
+
   PortfolioApiStack:
     Type: AWS::Serverless::Application
     Properties:
@@ -57,6 +69,7 @@ Resources:
         BlogsFunctionArn: !GetAtt BlogsLambdaStack.Outputs.BlogsFunctionArn
         ProjectsFunctionArn: !GetAtt ProjectsLambdaStack.Outputs.ProjectsFunctionArn
         CommentsFunctionArn: !GetAtt CommentsLambdaStack.Outputs.CommentsFunctionArn
+        TimelineFunctionArn: !GetAtt TimelineLambdaStack.Outputs.TimelineFunctionArn
 
 Outputs:
   PortfolioApi:

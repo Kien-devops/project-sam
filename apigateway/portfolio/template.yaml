@@ -12,6 +12,9 @@ Parameters:
   CommentsFunctionArn:
     Type: String
     Description: "ARN of the Comments Lambda function"
+  TimelineFunctionArn:
+    Type: String
+    Description: "ARN of the Timeline Lambda function"
 
 Resources:
   PortfolioHttpApi:
@@ -60,6 +63,15 @@ Resources:
       IntegrationType: AWS_PROXY
       IntegrationMethod: POST
       IntegrationUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CommentsFunctionArn}/invocations"
+      PayloadFormatVersion: "2.0"
+
+  TimelineIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationMethod: POST
+      IntegrationUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TimelineFunctionArn}/invocations"
       PayloadFormatVersion: "2.0"
 
   ListBlogsRoute:
@@ -152,6 +164,41 @@ Resources:
       ApiId: !Ref PortfolioHttpApi
       RouteKey: "DELETE /projects/{id}"
       Target: !Sub "integrations/${ProjectsIntegration}"
+
+  ListTimelineRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      RouteKey: "GET /timeline"
+      Target: !Sub "integrations/${TimelineIntegration}"
+
+  GetTimelineRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      RouteKey: "GET /timeline/{id}"
+      Target: !Sub "integrations/${TimelineIntegration}"
+
+  CreateTimelineRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      RouteKey: "POST /timeline"
+      Target: !Sub "integrations/${TimelineIntegration}"
+
+  UpdateTimelineRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      RouteKey: "PUT /timeline/{id}"
+      Target: !Sub "integrations/${TimelineIntegration}"
+
+  DeleteTimelineRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PortfolioHttpApi
+      RouteKey: "DELETE /timeline/{id}"
+      Target: !Sub "integrations/${TimelineIntegration}"
 
   PortfolioStage:
     Type: AWS::ApiGatewayV2::Stage
@@ -263,6 +310,46 @@ Resources:
       FunctionName: !Ref ProjectsFunctionArn
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/DELETE/projects/*"
+
+  ListTimelinePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref TimelineFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/GET/timeline"
+
+  GetTimelinePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref TimelineFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/GET/timeline/*"
+
+  CreateTimelinePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref TimelineFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/POST/timeline"
+
+  UpdateTimelinePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref TimelineFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/PUT/timeline/*"
+
+  DeleteTimelinePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref TimelineFunctionArn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PortfolioHttpApi}/$default/DELETE/timeline/*"
 
 Outputs:
   ApiUrl:
