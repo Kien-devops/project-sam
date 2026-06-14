@@ -1,56 +1,33 @@
 import json
 import logging
 import os
+import pymssql
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-_dynamodb_resource = None
-_s3_client = None
-
-
 def get_logger():
     return logger
 
+def get_db_connection():
+    return pymssql.connect(
+        server='100.112.150.56',
+        user='sa',
+        password='Abcd1234@',
+        database='portfolio'
+    )
 
-def get_table():
-    global _dynamodb_resource
-    if not _dynamodb_resource:
-        import boto3
-
-        _dynamodb_resource = boto3.resource("dynamodb")
-
-    table_name = os.environ.get("TABLE_NAME")
-    if not table_name:
-        raise ValueError("TABLE_NAME environment variable is not set")
-    return _dynamodb_resource.Table(table_name)
-
-
-def get_s3_client():
-    global _s3_client
-    if not _s3_client:
-        import boto3
-
-        _s3_client = boto3.client("s3")
-    return _s3_client
-
-
-def get_content_bucket_name():
-    bucket_name = os.environ.get("CONTENT_BUCKET_NAME")
-    if not bucket_name:
-        raise ValueError("CONTENT_BUCKET_NAME environment variable is not set")
-    return bucket_name
-
-
-class DecimalEncoder(json.JSONEncoder):
+class CustomJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         import decimal
+        from datetime import datetime, date
         if isinstance(obj, decimal.Decimal):
             if obj % 1 == 0:
                 return int(obj)
             return float(obj)
-        return super(DecimalEncoder, self).default(obj)
-
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        return super(CustomJSONEncoder, self).default(obj)
 
 def build_response(status_code: int, body_dict: dict) -> dict:
     return {
@@ -61,6 +38,5 @@ def build_response(status_code: int, body_dict: dict) -> dict:
             "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
             "Access-Control-Allow-Methods": "OPTIONS,GET,POST,PUT,DELETE",
         },
-        "body": json.dumps(body_dict, cls=DecimalEncoder),
+        "body": json.dumps(body_dict, cls=CustomJSONEncoder),
     }
-

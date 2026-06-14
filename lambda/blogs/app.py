@@ -1,26 +1,9 @@
 import base64
 import json
-import uuid
 from datetime import datetime, timezone
-
-from shared_utils import build_response, get_logger, get_table
+from shared_utils import build_response, get_logger, get_db_connection
 
 logger = get_logger()
-
-ALLOWED_FIELDS = {
-    "title",
-    "slug",
-    "summary",
-    "content",
-    "coverImage",
-    "tags",
-    "status",
-}
-
-
-def _now():
-    return datetime.now(timezone.utc).isoformat()
-
 
 def _method(event):
     return (
@@ -30,7 +13,6 @@ def _method(event):
         .upper()
     )
 
-
 def _body(event):
     body = event.get("body")
     if not body:
@@ -39,28 +21,58 @@ def _body(event):
         body = base64.b64decode(body).decode("utf-8")
     return json.loads(body)
 
-
 def _item_id(event):
     return (event.get("pathParameters") or {}).get("id")
 
+def _map_blog(row):
+    if not row:
+        return None
+    tags = []
+    if row.get('tags'):
+        try:
+            tags = json.loads(row['tags'])
+        except Exception:
+            pass
+    return {
+        "id": str(row['id']),
+        "title": row.get('title') or "",
+        "slug": row.get('slug') or "",
+        "summary": row.get('summary') or "",
+        "content": row.get('content') or "",
+        "image_url": row.get('image_url') or "",
+        "imageUrl": row.get('image_url') or "",
+        "coverImage": row.get('image_url') or "",
+        "tags": tags,
+        "status": row.get('status') or "draft",
+        "createdAt": row.get('created_at').isoformat() if row.get('created_at') else None,
+        "updatedAt": row.get('updated_at').isoformat() if row.get('updated_at') else None,
+    }
 
 def _list_blogs():
-    result = get_table().scan()
-    items = result.get("Items", [])
+    conn = get_db_connection()
+    cursor = conn.cursor(as_dict=True)
+    cursor.execute("SELECT * FROM [dbo].[blogs] ORDER BY id")
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    items = [_map_blog(r) for r in rows]
     return build_response(200, {"items": items, "count": len(items)})
-
 
 def _get_blog(event):
     blog_id = _item_id(event)
     if not blog_id:
         return build_response(400, {"message": "Missing required 'id' path parameter"})
-
-    result = get_table().get_item(Key={"id": blog_id})
-    item = result.get("Item")
-    if not item:
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(as_dict=True)
+    cursor.execute("SELECT * FROM [dbo].[blogs] WHERE id = %s", (blog_id,))
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    
+    if not row:
         return build_response(404, {"message": "Blog not found", "id": blog_id})
-    return build_response(200, {"blog": item})
-
+    return build_response(200, {"blog": _map_blog(row)})
 
 def _create_blog(event):
     data = _body(event)
@@ -69,23 +81,74 @@ def _create_blog(event):
     if not data.get("title"):
         return build_response(400, {"message": "Missing required field: 'title'"})
 
-    timestamp = _now()
-    item = {
-        "id": data.get("id") or str(uuid.uuid4()),
-        "title": data["title"],
-        "slug": data.get("slug", ""),
-        "summary": data.get("summary", ""),
-        "content": data.get("content", ""),
-        "coverImage": data.get("coverImage", ""),
-        "tags": data.get("tags", []),
-        "status": data.get("status", "draft"),
-        "createdAt": data.get("createdAt", timestamp),
-        "updatedAt": timestamp,
-    }
-
-    get_table().put_item(Item=item)
-    return build_response(201, {"message": "Blog created successfully", "blog": item})
-
+    conn = get_db_connection()
+    cursor = conn.cursor(as_dict=True)
+    
+    timestamp = datetime.now(timezone.utc)
+    tags_json = json.dumps(data.get("tags", []))
+    image_url = data.get("imageUrl") or data.get("coverImage") or ""
+    
+    blog_id = data.get("id")
+    is_numeric_id = False
+    if blog_id:
+        try:
+            blog_id = int(blog_id)
+            is_numeric_id = True
+        except ValueError:
+            pass
+            
+    if is_numeric_id:
+        cursor.execute("SET IDENTITY_INSERT [dbo].[blogs] ON")
+        cursor.execute(
+            """
+            INSERT INTO [dbo].[blogs] (id, title, slug, summary, content, image_url, tags, status, created_at, updated_at)
+            VALUES (%d, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                blog_id,
+                data["title"],
+                data.get("slug") or "",
+                data.get("summary") or "",
+                data.get("content") or "",
+                image_url,
+                tags_json,
+                data.get("status") or "draft",
+                timestamp,
+                timestamp
+            )
+        )
+        cursor.execute("SET IDENTITY_INSERT [dbo].[blogs] OFF")
+        inserted_id = blog_id
+    else:
+        cursor.execute(
+            """
+            INSERT INTO [dbo].[blogs] (title, slug, summary, content, image_url, tags, status, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                data["title"],
+                data.get("slug") or "",
+                data.get("summary") or "",
+                data.get("content") or "",
+                image_url,
+                tags_json,
+                data.get("status") or "draft",
+                timestamp,
+                timestamp
+            )
+        )
+        cursor.execute("SELECT @@IDENTITY")
+        inserted_id = int(cursor.fetchone()[0])
+        
+    conn.commit()
+    
+    # Fetch newly created blog
+    cursor.execute("SELECT * FROM [dbo].[blogs] WHERE id = %d", (inserted_id,))
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    
+    return build_response(201, {"message": "Blog created successfully", "blog": _map_blog(row)})
 
 def _update_blog(event):
     blog_id = _item_id(event)
@@ -96,33 +159,71 @@ def _update_blog(event):
     if not data:
         return build_response(400, {"message": "Invalid request: missing body"})
 
-    updates = {key: value for key, value in data.items() if key in ALLOWED_FIELDS}
-    updates["updatedAt"] = _now()
+    conn = get_db_connection()
+    cursor = conn.cursor(as_dict=True)
+    
+    cursor.execute("SELECT 1 FROM [dbo].[blogs] WHERE id = %s", (blog_id,))
+    if not cursor.fetchone():
+        cursor.close()
+        conn.close()
+        return build_response(404, {"message": "Blog not found", "id": blog_id})
 
-    expression_names = {f"#{key}": key for key in updates}
-    expression_values = {f":{key}": value for key, value in updates.items()}
-    update_expression = "SET " + ", ".join(
-        f"#{key} = :{key}" for key in updates
-    )
-
-    result = get_table().update_item(
-        Key={"id": blog_id},
-        UpdateExpression=update_expression,
-        ExpressionAttributeNames=expression_names,
-        ExpressionAttributeValues=expression_values,
-        ReturnValues="ALL_NEW",
-    )
-    return build_response(200, {"message": "Blog updated successfully", "blog": result["Attributes"]})
-
+    timestamp = datetime.now(timezone.utc)
+    updates = []
+    params = []
+    
+    if "title" in data:
+        updates.append("title = %s")
+        params.append(data["title"])
+    if "slug" in data:
+        updates.append("slug = %s")
+        params.append(data["slug"])
+    if "summary" in data:
+        updates.append("summary = %s")
+        params.append(data["summary"])
+    if "content" in data:
+        updates.append("content = %s")
+        params.append(data["content"])
+    if "coverImage" in data or "imageUrl" in data:
+        updates.append("image_url = %s")
+        params.append(data.get("coverImage") or data.get("imageUrl") or "")
+    if "tags" in data:
+        updates.append("tags = %s")
+        params.append(json.dumps(data["tags"]))
+    if "status" in data:
+        updates.append("status = %s")
+        params.append(data["status"])
+        
+    updates.append("updated_at = %s")
+    params.append(timestamp)
+    
+    query = f"UPDATE [dbo].[blogs] SET {', '.join(updates)} WHERE id = %s"
+    params.append(blog_id)
+    
+    cursor.execute(query, tuple(params))
+    conn.commit()
+    
+    # Fetch updated blog
+    cursor.execute("SELECT * FROM [dbo].[blogs] WHERE id = %s", (blog_id,))
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    
+    return build_response(200, {"message": "Blog updated successfully", "blog": _map_blog(row)})
 
 def _delete_blog(event):
     blog_id = _item_id(event)
     if not blog_id:
         return build_response(400, {"message": "Missing required 'id' path parameter"})
 
-    get_table().delete_item(Key={"id": blog_id})
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM [dbo].[blogs] WHERE id = %s", (blog_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
     return build_response(200, {"message": "Blog deleted successfully", "id": blog_id})
-
 
 def lambda_handler(event, context):
     logger.info("Received blogs event: %s", json.dumps(event))

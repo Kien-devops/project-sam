@@ -1,1 +1,1 @@
-# Requirements for blogs function
+pymssql
